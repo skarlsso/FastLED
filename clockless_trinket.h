@@ -200,7 +200,7 @@ public:
 // 2 cycles - jump out of the loop
 #define BRLOOP1 asm __volatile__("breq 2f" ASM_VARS );
 // 1 cycle - rotate the pattern byte right one - LEAVES CARRY FLAG DIRTY
-#define RPAT3 asm __volatile__("ror %[pattern]\n\tbrcc L_%=\n\tori %[pattern],0x80\n\t" ASM_VARS );
+#define RPAT3 asm __volatile__("ror %[pattern]\n\tbrcc L_%=\n\tori %[pattern],0x80\n\tL_%=:" ASM_VARS );
 // 2 cycles - power clear
 #define PWCLR2 asm __volatile__("sbrc %[pattern],0x01\n\t clr %[b0]\n\t" ASM_VARS);
 
@@ -274,7 +274,7 @@ public:
 				HI1 D1(1) QLO2(b0, 3) RORSC14(b1,4) 	D2(4)	LO1 ROR1(b1) CLC1	D3(2)			
 				HI1 D1(1) QLO2(b0, 2) SCROR14(b1,5) 	D2(4)	LO1 SCALE12(b1,6)	D3(2)			
 				HI1 D1(1) QLO2(b0, 1) RORSC14(b1,7) 	D2(4)	LO1 ROR1(b1) CLC1	D3(2)		
-				HI1 D1(1) QLO2(b0, 0) MOV1(b0,b1) 		D2(1)	LO1 				D3(0)
+				HI1 D1(1) QLO2(b0, 0) MOV1(b0,b1) 		D2(1)	LO1 PWCLR2			D3(2)
 				switch(XTRA0) {
 					case 4: HI1 D1(1) QLO2(b0,0) D2(0) LO1 D3(0);
 					case 3: HI1 D1(1) QLO2(b0,0) D2(0) LO1 D3(0);
@@ -288,7 +288,7 @@ public:
 				HI1 D1(1) QLO2(b0, 3) RORSC24(b1,4) 	D2(4)	LO1 ROR1(b1) CLC1	D3(2)	
 				HI1 D1(1) QLO2(b0, 2) SCROR24(b1,5) 	D2(4)	LO1 SCALE22(b1,6)	D3(2)	
 				HI1 D1(1) QLO2(b0, 1) RORSC24(b1,7) 	D2(4)	LO1 ROR1(b1) CLC1	D3(2)
-				HI1 D1(1) QLO2(b0, 0) MOV1(b0,b1) IDATA2 D2(3) 	LO1 				D3(0)
+				HI1 D1(1) QLO2(b0, 0) MOV1(b0,b1) IDATA2 D2(3) 	LO1 PWCLR2			D3(2)
 				switch(XTRA0) {
 					case 4: HI1 D1(1) QLO2(b0,0) D2(0) LO1 D3(0);
 					case 3: HI1 D1(1) QLO2(b0,0) D2(0) LO1 D3(0);
@@ -303,7 +303,7 @@ public:
 				HI1 D1(1) QLO2(b0, 2) SCROR04(b1,5) 	D2(4)	LO1 SCALE02(b1,6)	D3(2)	
 				HI1 D1(1) QLO2(b0, 1) RORSC04(b1,7) 	D2(4)	LO1 ROR1(b1) CLC1	D3(2)
 				// HI1 D1(1) QLO2(b0, 0) DCOUNT2 BRLOOP1 	D2(3) 	LO1 D3(2) JMPLOOP2	
-				HI1 D1(1) QLO2(b0, 0) MOV1(b0,b1) 		D2(1) 	LO1 				D3(0) 	
+				HI1 D1(1) QLO2(b0, 0) MOV1(b0,b1) RPAT3	D2(4) 	LO1 PWCLR2			D3(2) 	
 				switch(XTRA0) {
 					case 4: HI1 D1(1) QLO2(b0,0) D2(0) LO1 D3(0);
 					case 3: HI1 D1(1) QLO2(b0,0) D2(0) LO1 D3(0);
