@@ -153,7 +153,7 @@ struct PixelController {
         uint8_t e[3];
         CRGB mScale;
         uint8_t mAdvance;
-
+        uint8_t pattern;
         PixelController(const PixelController & other) {
             d[0] = other.d[0];
             d[1] = other.d[1];
@@ -165,6 +165,7 @@ struct PixelController {
             mScale = other.mScale;
             mAdvance = other.mAdvance;
             mLen = other.mLen;
+            pattern = other.pattern;;
         }
 
         PixelController(const uint8_t *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, bool advance=true, uint8_t skip=0) : mData(d), mLen(len), mScale(s) {
@@ -198,6 +199,9 @@ struct PixelController {
             mAdvance = 4; 
         }
 #endif
+
+        inline void setPattern(uint8_t p) { pattern = p; }
+        inline uint8_t getPattern() { return pattern; }
 
         void init_binary_dithering() {
 #if !defined(NO_DITHERING) || (NO_DITHERING != 1)
@@ -242,7 +246,9 @@ struct PixelController {
         __attribute__((always_inline)) inline int advanceBy() { return mAdvance; }
         
         // advance the data pointer forward, adjust position counter
-         __attribute__((always_inline)) inline void advanceData() { mData += mAdvance; mLen--;}
+         __attribute__((always_inline)) inline void advanceData() { 
+            mData += mAdvance; mLen--; 
+            pattern = (pattern >> 1) | ((pattern & 0x01) << 7);}
 
         // step the dithering forward 
          __attribute__((always_inline)) inline void stepDithering() {
@@ -258,7 +264,7 @@ struct PixelController {
             d[RO(0)] = e[RO(0)] - d[RO(0)];
         }
 
-        template<int SLOT>  __attribute__((always_inline)) inline static uint8_t loadByte(PixelController & pc) { return pc.mData[RO(SLOT)]; }
+        template<int SLOT>  __attribute__((always_inline)) inline static uint8_t loadByte(PixelController & pc) { return (pc.pattern & 0x01) ? pc.mData[RO(SLOT)] : 0; }
         template<int SLOT>  __attribute__((always_inline)) inline static uint8_t dither(PixelController & pc, uint8_t b) { return b ? qadd8(b, pc.d[RO(SLOT)]) : 0; }
         template<int SLOT>  __attribute__((always_inline)) inline static uint8_t scale(PixelController & pc, uint8_t b) { return scale8(b, pc.mScale.raw[RO(SLOT)]); }
 
