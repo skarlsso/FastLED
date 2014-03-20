@@ -170,6 +170,9 @@ public:
 	/// Update all our controllers with the current led colors
 	void show() { show(m_Scale); }
 
+	/// Update all the controllers with the given pixel masking pattern
+	void setPixelMaskPattern(uint8_t pattern);
+	
 	void clear(boolean writeData = false);
 
 	void clearData();

@@ -47,6 +47,14 @@ void CFastLED::showColor(const struct CRGB & color, uint8_t scale) {
 	}
 }
 
+void setPixelMaskPattern(uint8_t pattern) {
+	CLEDController *pCur = CLEDController::head();
+	while(pCur) { 
+		pCur->setPixelMaskPattern(pattern);
+		pCur = pCur->next();
+	}
+}
+	
 void CFastLED::clear(boolean writeData) { 
 	if(writeData) { 
 		showColor(CRGB(0,0,0), 0);

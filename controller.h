@@ -40,6 +40,7 @@ protected:
     int m_nLeds;
     static CLEDController *m_pHead;
     static CLEDController *m_pTail;
+    uint8_t mPixelMaskPattern;
 
     // set all the leds on the controller to a given color
     virtual void showColor(const struct CRGB & data, int nLeds, CRGB scale) = 0;
@@ -58,6 +59,7 @@ public:
         if(m_pHead==NULL) { m_pHead = this; }
         if(m_pTail != NULL) { m_pTail->m_pNext = this; }
         m_pTail = this;
+        mPixelMaskPattern = 0xFF;
     }
 
 	// initialize the LED controller
@@ -83,6 +85,15 @@ public:
 
     void showColor(const struct CRGB & data, uint8_t brightness=255) { 
         showColor(data, m_nLeds, getAdjustment(brightness));
+    }
+
+    CLEDController & setPixelMaskPattern(uint8_t pattern) { mPixelMaskPattern = pattern; return *this; }
+
+    /// Get and rotate the pixel mask mPixelMaskPattern for this controller
+    uint8_t getPixelMaskPattern() { 
+        uint8_t pattern = mPixelMaskPattern;
+        mPixelMaskPattern = (mPixelMaskPattern >> 1) | ((mPixelMaskPattern & 0x01) << 7);
+        return pattern; 
     }
 
     // navigating the list of controllers
@@ -153,7 +164,7 @@ struct PixelController {
         uint8_t e[3];
         CRGB mScale;
         uint8_t mAdvance;
-        uint8_t pattern;
+        uint8_t mPixelMaskPattern;
         PixelController(const PixelController & other) {
             d[0] = other.d[0];
             d[1] = other.d[1];
@@ -165,34 +176,34 @@ struct PixelController {
             mScale = other.mScale;
             mAdvance = other.mAdvance;
             mLen = other.mLen;
-            pattern = other.pattern;;
+            mPixelMaskPattern = other.mPixelMaskPattern;;
         }
 
-        PixelController(const uint8_t *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, bool advance=true, uint8_t skip=0) : mData(d), mLen(len), mScale(s) {
+        PixelController(const uint8_t *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF, bool advance=true, uint8_t skip=0) : mData(d), mLen(len), mScale(s) {
             enable_dithering(dither);
             mData += skip;
             mAdvance = (advance) ? 3+skip : 0;
         }
 
-        PixelController(const CRGB *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER) : mData((const uint8_t*)d), mLen(len), mScale(s) {
+        PixelController(const CRGB *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF) : mData((const uint8_t*)d), mLen(len), mScale(s) {
             enable_dithering(dither);
             mAdvance = 3;
         }
 
-        PixelController(const CRGB &d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER) : mData((const uint8_t*)&d), mLen(len), mScale(s) {
+        PixelController(const CRGB &d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF) : mData((const uint8_t*)&d), mLen(len), mScale(s) {
             enable_dithering(dither);
             mAdvance = 0;
         }
 
 #ifdef SUPPORT_ARGB
-        PixelController(const CARGB &d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER) : mData((const uint8_t*)&d), mLen(len), mScale(s) {
+        PixelController(const CARGB &d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF) : mData((const uint8_t*)&d), mLen(len), mScale(s) {
             enable_dithering(dither);
             // skip the A in CARGB            
             mData += 1;
             mAdvance = 0;
         }
 
-        PixelController(const CARGB *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER) : mData((const uint8_t*)d), mLen(len), mScale(s) {
+        PixelController(const CARGB *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF) : mData((const uint8_t*)d), mLen(len), mScale(s) {
             enable_dithering(dither);
             // skip the A in CARGB
             mData += 1;
@@ -200,8 +211,8 @@ struct PixelController {
         }
 #endif
 
-        inline void setPattern(uint8_t p) { pattern = p; }
-        inline uint8_t getPattern() { return pattern; }
+        inline void setPixelMaskPattern(uint8_t p) { mPixelMaskPattern = p; }
+        inline uint8_t getPixelMaskPattern() { return mPixelMaskPattern; }
 
         void init_binary_dithering() {
 #if !defined(NO_DITHERING) || (NO_DITHERING != 1)
@@ -248,7 +259,8 @@ struct PixelController {
         // advance the data pointer forward, adjust position counter
          __attribute__((always_inline)) inline void advanceData() { 
             mData += mAdvance; mLen--; 
-            pattern = (pattern >> 1) | ((pattern & 0x01) << 7);}
+            mPixelMaskPattern = (mPixelMaskPattern >> 1) | ((mPixelMaskPattern & 0x01) << 7);
+        }
 
         // step the dithering forward 
          __attribute__((always_inline)) inline void stepDithering() {
@@ -264,7 +276,7 @@ struct PixelController {
             d[RO(0)] = e[RO(0)] - d[RO(0)];
         }
 
-        template<int SLOT>  __attribute__((always_inline)) inline static uint8_t loadByte(PixelController & pc) { return (pc.pattern & 0x01) ? pc.mData[RO(SLOT)] : 0; }
+        template<int SLOT>  __attribute__((always_inline)) inline static uint8_t loadByte(PixelController & pc) { return (pc.mPixelMaskPattern & 0x01) ? pc.mData[RO(SLOT)] : 0; }
         template<int SLOT>  __attribute__((always_inline)) inline static uint8_t dither(PixelController & pc, uint8_t b) { return b ? qadd8(b, pc.d[RO(SLOT)]) : 0; }
         template<int SLOT>  __attribute__((always_inline)) inline static uint8_t scale(PixelController & pc, uint8_t b) { return scale8(b, pc.mScale.raw[RO(SLOT)]); }
 

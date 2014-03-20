@@ -40,7 +40,7 @@ public:
 		cli();
 		SysClockSaver savedClock(TOTAL);
 
-		showRGBInternal(PixelController<RGB_ORDER>(data, nLeds, scale, getDither()));
+		showRGBInternal(PixelController<RGB_ORDER>(data, nLeds, scale, getDither(), getPixelMaskPattern()));
 
 		// Adjust the timer
 		long microsTaken = nLeds * CLKS_TO_MICROS(24 * (TOTAL));
@@ -61,7 +61,7 @@ public:
 		// Serial.print(scale.raw[1]); Serial.print(" ");
 		// Serial.print(scale.raw[2]); Serial.println(" ");
 		// FastPinBB<DATA_PIN>::hi(); delay(1); FastPinBB<DATA_PIN>::lo();
-		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither()));
+		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither(), getPixelMaskPattern()));
 
 		// Adjust the timer
 		long microsTaken = nLeds * CLKS_TO_MICROS(24 * (TOTAL));
@@ -78,7 +78,7 @@ public:
 		cli();
 		SysClockSaver savedClock(TOTAL);
 
-		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither()));
+		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither(), getPixelMaskPattern()));
 
 		// Adjust the timer
 		long microsTaken = nLeds * CLKS_TO_MICROS(24 * (TOTAL));

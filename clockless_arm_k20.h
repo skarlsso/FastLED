@@ -28,7 +28,7 @@ public:
 		mWait.wait();
 		cli();
 
-		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither()));
+		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither(), getPixelMaskPattern()));
 
 		// Adjust the timer
 		long microsTaken = nLeds * CLKS_TO_MICROS(24 * (T1 + T2 + T3));
@@ -41,7 +41,7 @@ public:
 		mWait.wait();
 		cli();
 
-		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither()));
+		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither(), getPixelMaskPattern()));
 		
 		// Adjust the timer
 		long microsTaken = nLeds * CLKS_TO_MICROS(24 * (T1 + T2 + T3));
@@ -55,7 +55,7 @@ public:
 		mWait.wait();
 		cli();
 
-		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither()));
+		showRGBInternal(PixelController<RGB_ORDER>(rgbdata, nLeds, scale, getDither(), getPixelMaskPattern()));
 		
 
 		// Adjust the timer

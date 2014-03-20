@@ -91,7 +91,7 @@ public:
 		mWait.wait();
 		cli();
 
-		PixelController<RGB_ORDER> pixels(data, nLeds, scale, getDither(), advance, skip);
+		PixelController<RGB_ORDER> pixels(data, nLeds, scale, getDither(), getPixelMaskPattern(), advance, skip);
 		showRGBInternal(pixels);
 
 		// Adjust the timer
@@ -222,7 +222,7 @@ public:
 
 		uint8_t b0 = 0;
 		uint8_t b1 = 0;
-		uint8_t pattern = pixels.getPattern();
+		uint8_t pattern = pixels.getPixelMaskPattern();
 
 		// Setup the pixel controller and load/scale the first byte 
 		pixels.preStepFirstByteDithering();
