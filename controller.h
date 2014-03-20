@@ -179,35 +179,40 @@ struct PixelController {
             mPixelMaskPattern = other.mPixelMaskPattern;;
         }
 
-        PixelController(const uint8_t *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF, bool advance=true, uint8_t skip=0) : mData(d), mLen(len), mScale(s) {
+        PixelController(const uint8_t *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t pixelMaskPattern = 0xFF, bool advance=true, uint8_t skip=0) : mData(d), mLen(len), mScale(s) {
             enable_dithering(dither);
             mData += skip;
             mAdvance = (advance) ? 3+skip : 0;
+            mPixelMaskPattern = pixelMaskPattern;
         }
 
-        PixelController(const CRGB *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF) : mData((const uint8_t*)d), mLen(len), mScale(s) {
+        PixelController(const CRGB *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t pixelMaskPattern = 0xFF) : mData((const uint8_t*)d), mLen(len), mScale(s) {
             enable_dithering(dither);
             mAdvance = 3;
+            mPixelMaskPattern = pixelMaskPattern;
         }
 
-        PixelController(const CRGB &d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF) : mData((const uint8_t*)&d), mLen(len), mScale(s) {
+        PixelController(const CRGB &d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t pixelMaskPattern = 0xFF) : mData((const uint8_t*)&d), mLen(len), mScale(s) {
             enable_dithering(dither);
             mAdvance = 0;
+            mPixelMaskPattern = pixelMaskPattern;
         }
 
 #ifdef SUPPORT_ARGB
-        PixelController(const CARGB &d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF) : mData((const uint8_t*)&d), mLen(len), mScale(s) {
+        PixelController(const CARGB &d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t pixelMaskPattern = 0xFF) : mData((const uint8_t*)&d), mLen(len), mScale(s) {
             enable_dithering(dither);
             // skip the A in CARGB            
             mData += 1;
+            mPixelMaskPattern = pixelMaskPattern;
             mAdvance = 0;
         }
 
-        PixelController(const CARGB *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t mPixelMaskPattern = 0xFF) : mData((const uint8_t*)d), mLen(len), mScale(s) {
+        PixelController(const CARGB *d, int len, CRGB & s, EDitherMode dither = BINARY_DITHER, uint8_t pixelMaskPattern = 0xFF) : mData((const uint8_t*)d), mLen(len), mScale(s) {
             enable_dithering(dither);
             // skip the A in CARGB
             mData += 1;
             mAdvance = 4; 
+            mPixelMaskPattern = pixelMaskPattern;
         }
 #endif
 

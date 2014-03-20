@@ -71,6 +71,15 @@ void CFastLED::clearData() {
 }
 
 void CFastLED::delay(unsigned long ms) { 
+	// FastPin<13>::hi();
 	unsigned long start = millis();
-	while((millis()-start) < ms) { show(); }
+	int cnt = 0;
+	while((millis()-start) < ms) { 
+		show(); 
+		if((++cnt % 100) == 0) { 
+			Serial.print("There have been "); Serial.print(millis()-start); Serial.println(" so far.");
+		}
+	}
+			Serial.print("There have been "); Serial.print(millis()-start); Serial.println(" so far.");
+			FastPin<13>::lo();
 }
