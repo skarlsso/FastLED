@@ -1,7 +1,9 @@
 #ifndef __INC_COLORUTILS_H
 #define __INC_COLORUTILS_H
 
+#ifdef ARDUINO
 #include <avr/pgmspace.h>
+#endif
 
 #include "pixeltypes.h"
 
@@ -190,6 +192,11 @@ typedef prog_uint32_t TProgmemPalette16[16];
 // Convert a 16-entry palette to a 256-entry palette
 void UpscalePalette(const CRGBPalette16& srcpal16, CRGBPalette256& destpal256);
 
+#ifdef NO_PROGMEM
+#define PREAD(X,I) X[I]
+#else
+#define PREAD(X,I) pgm_read_dword_near(X + I)
+#endif
 
 class CRGBPalette16 {
 public:
@@ -205,7 +212,7 @@ public:
         entries[8]=c08; entries[9]=c09; entries[10]=c10; entries[11]=c11;
         entries[12]=c12; entries[13]=c13; entries[14]=c14; entries[15]=c15;
     };
-    
+
     CRGBPalette16( const CRGBPalette16& rhs)
     {
         memmove8( &(entries[0]), &(rhs.entries[0]), sizeof( entries));
@@ -215,21 +222,21 @@ public:
         memmove8( &(entries[0]), &(rhs.entries[0]), sizeof( entries));
         return *this;
     }
-    
+
     CRGBPalette16( const TProgmemPalette16& rhs)
     {
         for( uint8_t i = 0; i < 16; i++) {
-            entries[i] =  pgm_read_dword_near( rhs + i);
+            entries[i] =  PREAD( rhs, i);
         }
     }
     CRGBPalette16& operator=( const TProgmemPalette16& rhs)
     {
         for( uint8_t i = 0; i < 16; i++) {
-            entries[i] =  pgm_read_dword_near( rhs + i);
+            entries[i] =  PREAD( rhs, i);
         }
         return *this;
     }
-    
+
     inline CRGB& operator[] (uint8_t x) __attribute__((always_inline))
     {
         return entries[x];
@@ -238,7 +245,7 @@ public:
     {
         return entries[x];
     }
-    
+
     inline CRGB& operator[] (int x) __attribute__((always_inline))
     {
         return entries[(uint8_t)x];
@@ -247,12 +254,12 @@ public:
     {
         return entries[(uint8_t)x];
     }
-    
+
     operator CRGB*()
     {
         return &(entries[0]);
     }
-    
+
     CRGBPalette16( const CHSV& c1)
     {
         fill_solid( &(entries[0]), 16, c1);
@@ -269,7 +276,7 @@ public:
     {
         fill_gradient( &(entries[0]), 16, c1, c2, c3, c4);
     }
-    
+
     CRGBPalette16( const CRGB& c1)
     {
         fill_solid( &(entries[0]), 16, c1);
@@ -286,7 +293,7 @@ public:
     {
         fill_gradient_RGB( &(entries[0]), 16, c1, c2, c3, c4);
     }
-    
+
 
 };
 
@@ -303,7 +310,7 @@ public:
                           c08,c09,c10,c11,c12,c13,c14,c15);
         *this = p16;
     };
-    
+
     CRGBPalette256( const CRGBPalette256& rhs)
     {
         memmove8( &(entries[0]), &(rhs.entries[0]), sizeof( entries));
@@ -313,7 +320,7 @@ public:
         memmove8( &(entries[0]), &(rhs.entries[0]), sizeof( entries));
         return *this;
     }
-    
+
     CRGBPalette256( const CRGBPalette16& rhs16)
     {
         UpscalePalette( rhs16, *this);
@@ -323,7 +330,7 @@ public:
         UpscalePalette( rhs16, *this);
         return *this;
     }
-    
+
     CRGBPalette256( const TProgmemPalette16& rhs)
     {
         CRGBPalette16 p16(rhs);
@@ -335,7 +342,7 @@ public:
         *this = p16;
         return *this;
     }
-    
+
     inline CRGB& operator[] (uint8_t x) __attribute__((always_inline))
     {
         return entries[x];
@@ -344,7 +351,7 @@ public:
     {
         return entries[x];
     }
-    
+
     inline CRGB& operator[] (int x) __attribute__((always_inline))
     {
         return entries[(uint8_t)x];
@@ -358,7 +365,7 @@ public:
     {
         return &(entries[0]);
     }
-    
+
     CRGBPalette256( const CHSV& c1)
     {
         fill_solid( &(entries[0]), 256, c1);
@@ -375,7 +382,7 @@ public:
     {
         fill_gradient( &(entries[0]), 256, c1, c2, c3, c4);
     }
-    
+
     CRGBPalette256( const CRGB& c1)
     {
         fill_solid( &(entries[0]), 256, c1);
@@ -392,7 +399,7 @@ public:
     {
         fill_gradient_RGB( &(entries[0]), 256, c1, c2, c3, c4);
     }
-    
+
 };
 
 typedef enum { NOBLEND=0, BLEND=1 } TBlendType;

@@ -1,9 +1,7 @@
 #define __PROG_TYPES_COMPAT__
 
 #include <stdint.h>
-
-#include "hsv2rgb.h"
-#include "colorutils.h"
+#include "FastLED.h"
 
 
 void fill_solid( struct CRGB * pFirstLED, int numToFill,
@@ -45,30 +43,30 @@ void fill_gradient( CRGB* leds,
         endcolor = startcolor;
         endpos = startpos;
     }
-    
+
     saccum87 huedistance87;
     saccum87 satdistance87;
     saccum87 valdistance87;
-    
+
     satdistance87 = (endcolor.sat - startcolor.sat) << 7;
     valdistance87 = (endcolor.val - startcolor.val) << 7;
-    
+
     uint8_t huedelta8 = endcolor.hue - startcolor.hue;
-    
+
     if( directionCode == SHORTEST_HUES ) {
         directionCode = FORWARD_HUES;
         if( huedelta8 > 127) {
             directionCode = BACKWARD_HUES;
         }
     }
-    
+
     if( directionCode == LONGEST_HUES ) {
         directionCode = FORWARD_HUES;
         if( huedelta8 < 128) {
             directionCode = BACKWARD_HUES;
         }
     }
-    
+
     if( directionCode == FORWARD_HUES) {
         huedistance87 = huedelta8 << 7;
     }
@@ -77,14 +75,14 @@ void fill_gradient( CRGB* leds,
         huedistance87 = (uint8_t)(256 - huedelta8) << 7;
         huedistance87 = -huedistance87;
     }
-    
+
     uint16_t pixeldistance = endpos - startpos;
     uint16_t p2 = pixeldistance / 2;
     int16_t divisor = p2 ? p2 : 1;
     saccum87 huedelta87 = huedistance87 / divisor;
     saccum87 satdelta87 = satdistance87 / divisor;
     saccum87 valdelta87 = valdistance87 / divisor;
-    
+
     accum88 hue88 = startcolor.hue << 8;
     accum88 sat88 = startcolor.sat << 8;
     accum88 val88 = startcolor.val << 8;
@@ -109,22 +107,22 @@ void fill_gradient_RGB( CRGB* leds,
         endcolor = startcolor;
         endpos = startpos;
     }
-    
+
     saccum87 rdistance87;
     saccum87 gdistance87;
     saccum87 bdistance87;
-    
+
     rdistance87 = (endcolor.r - startcolor.r) << 7;
     gdistance87 = (endcolor.g - startcolor.g) << 7;
     bdistance87 = (endcolor.b - startcolor.b) << 7;
-        
+
     uint16_t pixeldistance = endpos - startpos;
     uint16_t p2 = pixeldistance / 2;
     int16_t divisor = p2 ? p2 : 1;
     saccum87 rdelta87 = rdistance87 / divisor;
     saccum87 gdelta87 = gdistance87 / divisor;
     saccum87 bdelta87 = bdistance87 / divisor;
-    
+
     accum88 r88 = startcolor.r << 8;
     accum88 g88 = startcolor.g << 8;
     accum88 b88 = startcolor.b << 8;
@@ -271,23 +269,23 @@ CRGB& nblend( CRGB& existing, const CRGB& overlay, fract8 amountOfOverlay )
     if( amountOfOverlay == 0) {
         return existing;
     }
-    
+
     if( amountOfOverlay == 255) {
         existing = overlay;
         return existing;
     }
-    
+
     fract8 amountOfKeep = 256 - amountOfOverlay;
-    
+
     existing.red   = scale8_LEAVING_R1_DIRTY( existing.red,   amountOfKeep)
                     + scale8_LEAVING_R1_DIRTY( overlay.red,    amountOfOverlay);
     existing.green = scale8_LEAVING_R1_DIRTY( existing.green, amountOfKeep)
                     + scale8_LEAVING_R1_DIRTY( overlay.green,  amountOfOverlay);
     existing.blue  = scale8_LEAVING_R1_DIRTY( existing.blue,  amountOfKeep)
                     + scale8_LEAVING_R1_DIRTY( overlay.blue,   amountOfOverlay);
-    
+
     cleanup_R1();
-    
+
     return existing;
 }
 
@@ -334,37 +332,37 @@ CRGB* blend( const CRGB* src1, const CRGB* src2, CRGB* dest, uint16_t count, fra
 CRGB HeatColor( uint8_t temperature)
 {
     CRGB heatcolor;
-    
+
     // Scale 'heat' down from 0-255 to 0-191,
     // which can then be easily divided into three
     // equal 'thirds' of 64 units each.
     uint8_t t192 = scale8_video( temperature, 192);
-    
+
     // calculate a value that ramps up from
     // zero to 255 in each 'third' of the scale.
     uint8_t heatramp = t192 & 0x3F; // 0..63
     heatramp <<= 2; // scale up to 0..252
-    
+
     // now figure out which third of the spectrum we're in:
     if( t192 & 0x80) {
         // we're in the hottest third
         heatcolor.r = 255; // full red
         heatcolor.g = 255; // full green
         heatcolor.b = heatramp; // ramp up blue
-        
+
     } else if( t192 & 0x40 ) {
         // we're in the middle third
         heatcolor.r = 255; // full red
         heatcolor.g = heatramp; // ramp up green
         heatcolor.b = 0; // no blue
-        
+
     } else {
         // we're in the coolest third
         heatcolor.r = heatramp; // ramp up red
         heatcolor.g = 0; // no green
         heatcolor.b = 0; // no blue
     }
-    
+
     return heatcolor;
 }
 
@@ -374,33 +372,33 @@ CRGB ColorFromPalette( const CRGBPalette16& pal, uint8_t index, uint8_t brightne
 {
     uint8_t hi4 = index >> 4;
     uint8_t lo4 = index & 0x0F;
-    
+
     //  CRGB rgb1 = pal[ hi4];
     const CRGB* entry = &(pal[0]) + hi4;
     uint8_t red1   = entry->red;
     uint8_t green1 = entry->green;
     uint8_t blue1  = entry->blue;
-    
+
     uint8_t blend = lo4 && (blendType != NOBLEND);
-    
+
     if( blend ) {
-        
+
         if( hi4 == 15 ) {
             entry = &(pal[0]);
         } else {
             entry++;
         }
-        
+
         uint8_t f2 = lo4 << 4;
         uint8_t f1 = 256 - f2;
-        
+
         //    rgb1.nscale8(f1);
         red1   = scale8_LEAVING_R1_DIRTY( red1,   f1);
         green1 = scale8_LEAVING_R1_DIRTY( green1, f1);
         blue1  = scale8_LEAVING_R1_DIRTY( blue1,  f1);
-                
+
         //    cleanup_R1();
-        
+
         //    CRGB rgb2 = pal[ hi4];
         //    rgb2.nscale8(f2);
         uint8_t red2   = entry->red;
@@ -409,21 +407,21 @@ CRGB ColorFromPalette( const CRGBPalette16& pal, uint8_t index, uint8_t brightne
         red2   = scale8_LEAVING_R1_DIRTY( red2,   f2);
         green2 = scale8_LEAVING_R1_DIRTY( green2, f2);
         blue2  = scale8_LEAVING_R1_DIRTY( blue2,  f2);
-        
+
         cleanup_R1();
-        
+
         // These sums can't overflow, so no qadd8 needed.
         red1   += red2;
         green1 += green2;
         blue1  += blue2;
 
     }
-    
+
     if( brightness != 255) {
         nscale8x3_video( red1, green1, blue1, brightness);
     }
-    
-    return CRGB( red1, green1, blue1);  
+
+    return CRGB( red1, green1, blue1);
 }
 
 
@@ -434,11 +432,11 @@ CRGB ColorFromPalette( const CRGBPalette256& pal, uint8_t index, uint8_t brightn
     uint8_t red   = entry->red;
     uint8_t green = entry->green;
     uint8_t blue  = entry->blue;
-    
+
     if( brightness != 255) {
         nscale8x3_video( red, green, blue, brightness);
     }
-    
+
     return CRGB( red, green, blue);
 }
 
@@ -479,5 +477,3 @@ void fill_palette(CRGB* L, uint16_t N, uint8_t startIndex, uint8_t incIndex,
         colorIndex += incIndex;
     }
 }
-
-

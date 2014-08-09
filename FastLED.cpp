@@ -87,12 +87,13 @@ void CFastLED::clearData() {
 }
 
 void CFastLED::delay(unsigned long ms) {
+#ifdef ARDUINO
 	unsigned long start = millis();
 	while((millis()-start) < ms) {
 		show();
 
 	}
-
+#endif
 }
 
 void CFastLED::setTemperature(const struct CRGB & temp) {
@@ -123,6 +124,7 @@ extern int noise_min;
 extern int noise_max;
 
 void CFastLED::countFPS(int nFrames) {
+#ifdef ARDUINO
 	if(Serial) {
 	  static int br = 0;
 	  static uint32_t lastframe = 0; // millis();
@@ -140,4 +142,5 @@ void CFastLED::countFPS(int nFrames) {
 	    lastframe = millis();
 	  }
 	}
+#endif
 }

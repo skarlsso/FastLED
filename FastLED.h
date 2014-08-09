@@ -13,6 +13,7 @@
 #include<SmartMatrix.h>
 #endif
 
+#include "led_sysdefs.h"
 #include "controller.h"
 #include "fastpin.h"
 #include "fastspi.h"

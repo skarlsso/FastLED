@@ -12,7 +12,7 @@
 #define RGB_BYTE1(RO) ((RO>>3) & 0x3)
 #define RGB_BYTE2(RO) ((RO) & 0x3)
 
-// operator byte *(struct CRGB[] arr) { return (byte*)arr; }
+// operator uint8_t *(struct CRGB[] arr) { return (uint8_t*)arr; }
 
 #define DISABLE_DITHER 0x00
 #define BINARY_DITHER 0x01
@@ -236,20 +236,20 @@ struct PixelController {
                                   (UPDATES_PER_FULL_DITHER_CYCLE>128) )
 #define VIRTUAL_BITS RECOMMENDED_VIRTUAL_BITS
             // R is the digther signal 'counter'.
-            static byte R = 0;
+            static uint8_t R = 0;
             R++;
 
             // R is wrapped around at 2^ditherBits,
             // so if ditherBits is 2, R will cycle through (0,1,2,3)
-            byte ditherBits = VIRTUAL_BITS;
+            uint8_t ditherBits = VIRTUAL_BITS;
             R &= (0x01 << ditherBits) - 1;
 
             // Q is the "unscaled dither signal" itself.
             // It's initialized to the reversed bits of R.
             // If 'ditherBits' is 2, Q here will cycle through (0,128,64,192)
-            byte Q = 0;
+            uint8_t Q = 0;
 
-            // Reverse bits in a byte
+            // Reverse bits in a uint8_t
             {
                 if(R & 0x01) { Q |= 0x80; }
                 if(R & 0x02) { Q |= 0x40; }
@@ -275,7 +275,7 @@ struct PixelController {
 
             // Setup the initial D and E values
             for(int i = 0; i < 3; i++) {
-                    byte s = mScale.raw[i];
+                    uint8_t s = mScale.raw[i];
                     e[i] = s ? (256/s) + 1 : 0;
                     d[i] = scale8(Q, e[i]);
                     if(e[i]) e[i]--;
@@ -311,7 +311,7 @@ struct PixelController {
                 d[2] = e[2] - d[2];
         }
 
-        // Some chipsets pre-cycle the first byte, which means we want to cycle byte 0's dithering separately
+        // Some chipsets pre-cycle the first uint8_t, which means we want to cycle uint8_t 0's dithering separately
         __attribute__((always_inline)) inline void preStepFirstByteDithering() {
             d[RO(0)] = e[RO(0)] - d[RO(0)];
         }

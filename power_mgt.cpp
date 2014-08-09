@@ -45,15 +45,14 @@ static const uint8_t gMCU_mW  =  25 * 5; // 25mA @ 5v = 125 mW
 static uint32_t gMaxPowerInMilliwatts = (uint32_t)(400) * (uint32_t)(5); // 400mA @ 5v default to avoid USB bricking
 static uint8_t  gMaxPowerIndicatorLEDPinNumber = 13; // default = Arduino onboard LED pin.  set to zero to skip this.
 
-
 uint32_t calculate_unscaled_power_mW( const CRGB* ledbuffer, uint16_t numLeds ) //25354
 {
     uint32_t red32 = 0, green32 = 0, blue32 = 0;
     const CRGB* firstled = &(ledbuffer[0]);
     uint8_t* p = (uint8_t*)(firstled);
-    
+
     uint16_t count = numLeds;
-    
+
     // This loop might benefit from an AVR assembly version -MEK
     while( count) {
         red32   += *p++;
@@ -61,17 +60,17 @@ uint32_t calculate_unscaled_power_mW( const CRGB* ledbuffer, uint16_t numLeds ) 
         blue32  += *p++;
         count--;
     }
-    
+
     red32   *= gRed_mW;
     green32 *= gGreen_mW;
     blue32  *= gBlue_mW;
-    
+
     red32   >>= 8;
     green32 >>= 8;
     blue32  >>= 8;
-    
+
     uint32_t total = red32 + green32 + blue32 + (gDark_mW * numLeds);
-    
+
     return total;
 }
 
@@ -83,7 +82,7 @@ uint32_t calculate_unscaled_power_mW( const CRGB* ledbuffer, uint16_t numLeds ) 
 uint8_t calculate_max_brightness_for_power_mW( uint8_t target_brightness, uint32_t max_power_mW)
 {
     uint32_t total_mW = gMCU_mW;
-    
+
     CLEDController *pCur = CLEDController::head();
 	while(pCur) {
         total_mW += calculate_unscaled_power_mW( pCur->leds(), pCur->size());
@@ -94,7 +93,7 @@ uint8_t calculate_max_brightness_for_power_mW( uint8_t target_brightness, uint32
     Serial.print("power demand at full brightness mW = ");
     Serial.println( total_mW);
 #endif
-    
+
     uint32_t requested_power_mW = ((uint32_t)total_mW * target_brightness) / 256;
 #if POWER_DEBUG_PRINT == 1
     if( target_brightness != 255 ) {
@@ -104,11 +103,11 @@ uint8_t calculate_max_brightness_for_power_mW( uint8_t target_brightness, uint32
     Serial.print("power limit mW = ");
     Serial.println( max_power_mW);
 #endif
-    
+
     if( requested_power_mW < max_power_mW) {
 #if POWER_LED > 0
         if( gMaxPowerIndicatorLEDPinNumber ) {
-            digitalWrite(gMaxPowerIndicatorLEDPinNumber, LOW);   // turn the LED off
+            Pin(gMaxPowerIndicatorLEDPinNumber).lo();
         }
 #endif
 #if POWER_DEBUG_PRINT == 1
@@ -116,7 +115,7 @@ uint8_t calculate_max_brightness_for_power_mW( uint8_t target_brightness, uint32
 #endif
         return target_brightness;
     }
-    
+
     uint8_t recommended_brightness = (uint32_t)((uint8_t)(target_brightness) * (uint32_t)(max_power_mW)) / ((uint32_t)(requested_power_mW));
 #if POWER_DEBUG_PRINT == 1
     Serial.print("recommended brightness # = ");
@@ -125,16 +124,16 @@ uint8_t calculate_max_brightness_for_power_mW( uint8_t target_brightness, uint32
     uint32_t resultant_power_mW = (total_mW * recommended_brightness) / 256;
     Serial.print("resultant power demand mW = ");
     Serial.println( resultant_power_mW);
-    
+
     Serial.println();
 #endif
-    
+
 #if POWER_LED > 0
     if( gMaxPowerIndicatorLEDPinNumber ) {
-        digitalWrite( gMaxPowerIndicatorLEDPinNumber, HIGH);   // turn the LED on
+        Pin(gMaxPowerIndicatorLEDPinNumber).hi();
     }
 #endif
-    
+
     return recommended_brightness;
 }
 
@@ -158,7 +157,7 @@ void show_at_max_brightness_for_power()
 {
     uint8_t targetBrightness = FastLED.getBrightness();
     uint8_t max = calculate_max_brightness_for_power_mW( targetBrightness, gMaxPowerInMilliwatts);
-    
+
     FastLED.setBrightness( max );
     FastLED.show();
     FastLED.setBrightness( targetBrightness );
@@ -168,9 +167,8 @@ void delay_at_max_brightness_for_power( uint16_t ms)
 {
     uint8_t targetBrightness = FastLED.getBrightness();
     uint8_t max = calculate_max_brightness_for_power_mW( targetBrightness, gMaxPowerInMilliwatts);
-    
+
     FastLED.setBrightness( max );
     FastLED.delay( ms);
     FastLED.setBrightness( targetBrightness );
 }
-
