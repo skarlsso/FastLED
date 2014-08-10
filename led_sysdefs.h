@@ -14,6 +14,7 @@ typedef uint32_t prog_uint32_t;
 typedef uint8_t boolean;
 #define PROGMEM
 #define NO_PROGMEM
+#define NEED_CXX_BITS
 
 #define cli()  __disable_irq();
 #define sei() __enable_irq();

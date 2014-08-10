@@ -148,60 +148,77 @@ public:
 #define _VAL CTPTR[2]
 #define VAL (volatile uint32_t)(*((uint32_t*)(SysTick_BASE + 8)))
 
-  template<int BITS>  __attribute__ ((always_inline)) inline static void writeBits(register uint32_t & next_mark, register data_ptr_t port, register uint8_t & b) {
-    for(register uint32_t i = BITS; i > 0; i--) {
-      // wait to start the bit, then set the pin high
-      while(VAL > next_mark);
-      next_mark = (VAL-TOTAL);
-      *port = 1;
+#define DT1(ADJ) delaycycles<T1-ADJ>();
+#define DT2(ADJ) delaycycles<T2-ADJ>();
+#define DT3(ADJ) delaycycles<T3-ADJ>();
 
-      // how long we want to wait next depends on whether or not our bit is set to 1 or 0
-      if(b&0x80) {
-        // we're a 1, wait until there's less than T3 clocks left
-        while((VAL - next_mark) > (T3));
-      } else {
-        // we're a 0, wait until there's less than (T2+T3+slop) clocks left in this bit
-        while((VAL-next_mark) > (T2+T3+6+TADJUST+TADJUST));
-      }
-      *port=0;
-      b <<= 1;
-    }
-  }
+#define HI2 FastPin<DATA_PIN>::hi();
+#define LO2 FastPin<DATA_PIN>::lo();
+#define BC2(BIT) if(b & 0x80) {} else { FastPin<DATA_PIN>::lo(); }
+#define LSB1 b <<= 1;
+
 
 #define FORCE_REFERENCE(var)  asm volatile( "" : : "r" (var) )
   // This method is made static to force making register Y available to use for data on AVR - if the method is non-static, then
   // gcc will use register Y for the this pointer.
   static uint32_t showRGBInternal(PixelController<RGB_ORDER> & pixels) {
     // Setup and start the clock
-    register volatile uint32_t *CTPTR asm("r6")= &SysTick->CTRL; FORCE_REFERENCE(CTPTR);
-    _LOAD = 0x00FFFFFF;
-    _VAL = 0;
-    _CTRL |= SysTick_CTRL_CLKSOURCE_Msk;
-    _CTRL |= SysTick_CTRL_ENABLE_Msk;
+    // volatile uint32_t *CTPTR = &SysTick->CTRL;
+    // _LOAD = ~(0xFF << 24);
+    // _VAL = 0;
+    // _CTRL |= SysTick_CTRL_CLKSOURCE_Msk;
+    // _CTRL |= SysTick_CTRL_ENABLE_Msk;
 
-    register data_ptr_t port asm("r7") = FastPinBB<DATA_PIN>::port(); FORCE_REFERENCE(port);
-    *port = 0;
+    // register data_ptr_t port asm("r7") = 0; // FastPinBB<DATA_PIN>::port(); FORCE_REFERENCE(port);
+    // *port = 0;
 
     // Setup the pixel controller and load/scale the first byte
-    pixels.preStepFirstByteDithering();
-    register uint8_t b = pixels.loadAndScale0();
+    // pixels.preStepFirstByteDithering();
+    register const uint8_t *pdata = pixels.mData;
+    CRGB scale = pixels.mScale;
 
-    uint32_t next_mark = (VAL - (TOTAL));
-    while(pixels.has(1)) {
-      pixels.stepDithering();
 
-      writeBits<8+XTRA0>(next_mark, port, b);
+    register uint32_t b = scale8(pdata[RO(0)], scale.raw[RO(0)]);
+    register uint32_t b2;
+    int len = pixels.mLen;
+    while(len >= 1) {
+      HI2; DT1(4); BC2(7); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(6); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(5); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(4); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(3); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(2); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(1); DT2(2); LO2; LSB1; DT3(5); b2 = pdata[RO(1)];
+      HI2; DT1(4); BC2(0); DT2(2); LO2; DT3(6);
 
-      b = pixels.loadAndScale1();
-      writeBits<8+XTRA0>(next_mark, port,b);
+      b = scale8(b2, scale.raw[RO(1)]);
+      len--;
 
-      b = pixels.loadAndScale2();
-      writeBits<8+XTRA0>(next_mark, port,b);
+      HI2; DT1(4); BC2(7); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(6); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(5); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(4); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(3); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(2); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(1); DT2(2); LO2; LSB1; DT3(5); b2 = pdata[RO(2)];
+      HI2; DT1(4); BC2(0); DT2(2); LO2; DT3(6);
 
-      b = pixels.advanceAndLoadAndScale0();
+      b = scale8(b2, scale.raw[RO(2)]);
+      pdata += 3;
+
+      HI2; DT1(4); BC2(7); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(6); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(5); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(4); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(3); DT2(2); LO2; LSB1; DT3(3);
+      HI2; DT1(4); BC2(2); DT2(2); LO2; LSB1; DT3(6);
+      HI2; DT1(4); BC2(1); DT2(2); LO2; LSB1; DT3(5); b2 = pdata[RO(0)];
+      HI2; DT1(4); BC2(0); DT2(2); LO2; DT3(6);
+
+      b = scale8(b2, scale.raw[RO(0)]);
     };
 
-    return 0x00FFFFFF - _VAL;
+    return 0; // 0x00FFFFFF - _VAL;
   }
 #endif
 };
